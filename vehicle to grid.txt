@@ -1,0 +1,231 @@
+#include<LiquidCrystal_I2C.h>
+LiquidCrystal_I2C lcd(0x27,16,2);
+
+int scan = 0;
+int user ;
+
+int user1balance = 1000;
+int user2balance = 1000;
+int user3balance = 1000;
+
+int indata;
+
+int relay1 = 16;
+int relay2 = 13;
+int relay3 = 12;
+int relay4 = 14;
+
+int timer1 = 0;
+int timer2 = 0;
+int timer3 = 0;
+int flag=0;
+int cnt;
+
+//voltage sensor
+int analogIn = A0;
+float vout = 0.0;
+float vin = 0.0;
+float R1 = 30000.0; // resistance of R1 (100K) 
+float R2 = 7500.0; // resistance of R2 (10K)
+int val = 0;
+
+void setup()
+{
+  Serial.begin(9600);
+  lcd.init();
+  lcd.backlight();
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("VEHICLE TO GRID"); 
+    delay(2000);
+   pinMode(analogIn, INPUT);
+  pinMode(relay1, OUTPUT);
+  pinMode(relay2, OUTPUT);
+  pinMode(relay3, OUTPUT);
+  pinMode(relay4,OUTPUT);
+  
+ digitalWrite(relay1,HIGH);
+ digitalWrite(relay2,HIGH);
+ digitalWrite(relay3,HIGH);
+ digitalWrite(relay4,HIGH);
+}
+
+void loop()
+{
+   lcd.clear();
+   lcd.setCursor(0,0);
+   lcd.print("SWIPE UR CARD");
+   delay(500);
+   Serial.println("Swipe Card");
+    
+  if(Serial.available()>0)
+  {
+    
+    
+    indata = Serial.parseInt();
+    if(indata == 2545990)
+    {
+      scan = 1;
+      user = 1;
+    }
+    else if(indata == 2515451)
+    {
+      scan = 1;
+      user = 2;
+    }
+    else if(indata == 2537240)
+    {
+      scan = 1;
+      user = 3;
+    }
+  }
+while(scan)
+{
+  
+    
+if(user == 1 )
+{
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("USER1 CARD SCAN");
+  delay(2000);
+  Serial.println("user 1 card is scanned");
+  digitalWrite(relay1, LOW);
+  timer1 += 1;
+  lcd.setCursor(0,1);
+  lcd.print("TIME:"+String(timer1)+"sec");
+ 
+   val = analogRead(analogIn);       // read the value at analog input
+   vout = (val * 3.3) / 1023.0; 
+   vin = vout / (R2/(R1+R2)); 
+   if (vin<0.09) {
+   vin=0.0;                          //statement to quash undesired reading !
+} 
+Serial.println("INPUT V= ");
+lcd.clear();
+lcd.setCursor(0,0);
+lcd.print("Voltage:"+String(vin));
+Serial.println(vin);
+if(vin>=10.00)
+{
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("Voltage:"+String(vin));
+  digitalWrite(relay4,LOW);
+  
+   if(Serial.available()>0)
+  {
+    indata = Serial.parseInt();
+    if(indata == 2545990)
+    {
+      digitalWrite(relay1 , HIGH);
+      digitalWrite(relay4 , HIGH);
+      user1balance = user1balance - timer1;
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("CHARGE TIME:" +String(timer1)+"Sec");
+      lcd.setCursor(0,1);
+      lcd.print("USER1 BAL:"+String(user1balance)+"Rs");
+       Serial.println("charge Time:" +String(timer1)+"Sec");
+      Serial.println("USER1 Bal:"+String(user1balance)+"Rs");
+    
+      scan = 0;
+      
+      user = 0;
+      timer1 = 0;
+      
+    } 
+  }
+       
+}
+else
+{
+  digitalWrite(relay4,HIGH);
+  if(Serial.available()>0)
+  {
+    indata = Serial.parseInt();
+    if(indata == 2545990)
+    {
+      digitalWrite(relay1 , HIGH);
+      user1balance = user1balance - timer1;
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("CHARGE TIME:" +String(timer1)+"Sec");
+      lcd.setCursor(0,1);
+      lcd.print("USER1 BAL:"+String(user1balance)+"Rs");
+       Serial.println("charge Time:" +String(timer1)+"Sec");
+      Serial.println("USER1 Bal:"+String(user1balance)+"Rs");
+    
+      scan = 0;
+      
+      user = 0;
+      timer1 = 0;
+      
+    } 
+  }
+}
+}
+if(user == 2)
+{
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("USER2 CARD SCAN");
+  Serial.println("user 2 card is scanned");
+   digitalWrite(relay2, LOW);
+  timer2 += 1;
+   lcd.setCursor(0,1);
+  lcd.print("TIME:"+String(timer2)+"sec");
+  if(Serial.available()>0)
+  {
+    indata = Serial.parseInt();
+    if(indata == 2515451)
+    {
+     digitalWrite(relay2 , HIGH);
+      user2balance = user2balance - timer2;
+       lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("CHARGE TIME:" +String(timer2)+"Sec");
+      lcd.setCursor(0,1);
+      lcd.print("USER2 BAL:"+String(user2balance)+"Rs");
+       Serial.println("charge Time:" +String(timer2)+"Sec");
+      Serial.println("Balance:"+String(user2balance));
+  
+      scan = 0;
+      user = 0;
+      timer2 = 0;
+    } 
+  }
+}
+if(user == 3)
+{
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("USER3 CARD SCAN");
+  Serial.println("user 3 card is scanned");
+  digitalWrite(relay3, LOW);
+  timer3 += 1;
+  lcd.setCursor(0,1);
+  lcd.print("TIME:"+String(timer3)+"sec");
+  if(Serial.available()>0)
+  {
+    indata = Serial.parseInt();
+    if(indata == 2537240)
+    {
+     digitalWrite(relay3 , HIGH);
+      user3balance = user3balance - timer3;
+       lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("CHARGE TIME:" +String(timer3)+"Sec");
+      lcd.setCursor(0,1);
+      lcd.print("USER3 BAL:"+String(user3balance)+"Rs");
+      Serial.println("charge Time:" +String(timer3)+"Sec");
+      Serial.println("Balance:"+String(user3balance));
+      scan = 0;
+      user = 0;
+      timer3 = 0;
+    } 
+  }
+}
+delay(1000);
+}
+}
